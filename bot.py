@@ -33,9 +33,13 @@ async def hello(ctx, name: str = None):
 	await ctx.respond(f"Hello {name}!")
 
 @bot.slash_command(name="count", description="Count messages in a channel")
-async def count(ctx, channel: discord.TextChannel=None):
+@option(name="channel", description="Specify the channel", required=False)
+@option(name="user", description="Count only messages from specified user", required=False)
+async def count(ctx, channel: discord.TextChannel=None, user: discord.User=None):
 	channel = channel or ctx.channel
-	await ctx.respond("Counting messages...")
+	embed=discord.Embed(title="", description="", color=0xff0000)
+	embed.set_image(url="https://i.stack.imgur.com/hzk6C.gif")
+	await ctx.respond(embed=embed)
 	bots = 0
 	users = 0
 	messages_per_date = {}
@@ -48,11 +52,15 @@ async def count(ctx, channel: discord.TextChannel=None):
 			bots += 1
 		else:
 			users += 1
-	embed = discord.Embed(title=":calendar: Messages per day", description="Show how many messages were send each day", color=0x00FF00)
-	for date in messages_per_date:
-		embed.add_field(name=f"{date}", value=f"{messages_per_date[date]} messages", inline=False)
-	await ctx.respond(embed=embed)
-	await ctx.respond(f"There are **{users+bots}** messages in {channel}. **{users}** of them are from users and **{bots}** of them are from bots.")
+	# embed = discord.Embed(title=":calendar: Messages per day", description="Show how many messages were send each day", color=0x00FF00)
+	# for date in messages_per_date:
+	# 	embed.add_field(name=f"{date}", value=f"{messages_per_date[date]} messages", inline=False)
+	# await ctx.respond(embed=embed)
+	embed=discord.Embed(title="Results", description="", color=0xff0000)
+	embed.add_field(name="Messages", value=f"In total, there are **{users+bots}** messages in **{channel}**.", inline=True)
+	embed.add_field(name="Users", value=f"There are **{users}** messages from users in **{channel}**.", inline=True)
+	embed.add_field(name="Bots", value=f"There are **{bots}** messages from bots in **{channel}**.", inline=True)
+	await ctx.edit(embed=embed)
 
 @bot.slash_command(name="countall", description="Count messages in all channels")
 async def countall(ctx):
