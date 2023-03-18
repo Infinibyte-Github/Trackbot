@@ -44,39 +44,56 @@ async def count(ctx, channel: discord.TextChannel=None, user: discord.User=None)
 	await ctx.respond(embed=embed)
 	bots = 0
 	users = 0
+	usermessages = 0
 	messages_per_date = {}
-	async for message in channel.history(limit=None):
-		message_date = message.created_at.date()
-		if message_date not in messages_per_date: # Add the date to the dictionary if necessary
-			messages_per_date[message_date] = 0
-		messages_per_date[message_date] += 1 # Increment the number of messages on that date
-		if message.author.bot == True:
-			bots += 1
-		else:
-			users += 1
-	# print(messages_per_date)
-	embed=discord.Embed(title="Results", description="", color=0xff0000)
-	embed.add_field(name="Messages", value=f"In total, there are **{users+bots}** messages in **{channel}**.", inline=True)
-	embed.add_field(name="Users", value=f"There are **{users}** messages from users in **{channel}**.", inline=True)
-	embed.add_field(name="Bots", value=f"There are **{bots}** messages from bots in **{channel}**.", inline=True)
-	await ctx.edit(embed=embed)
+	if(user):
+		for channel in ctx.guild.channels:
+			if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel== True:
+				async for message in channel.history(limit=None):
+					print(message.author.id)
+					print(user.id)
+					if message.author.id == user.id:
+						usermessages+=1
+		embed=discord.Embed(title="Results", description="", color=0xff0000)
+		embed.add_field(name="Messages", value=f"In total, {user.name} has send **{users+bots}** messages in this server.", inline=True)
+		await ctx.edit(embed=embed)
+						
+	else:
+		async for message in channel.history(limit=None):
+			message_date = message.created_at.date()
+			if message_date not in messages_per_date: # Add the date to the dictionary if necessary
+				messages_per_date[message_date] = 0
+			messages_per_date[message_date] += 1 # Increment the number of messages on that date
+			if message.author.bot == True:
+				bots += 1
+			else:
+				users += 1
+		# print(messages_per_date)
+		embed=discord.Embed(title="Results", description="", color=0xff0000)
+		embed.add_field(name="Messages", value=f"In total, there are **{users+bots}** messages in **{channel}**.", inline=True)
+		embed.add_field(name="Users", value=f"There are **{users}** messages from users in **{channel}**.", inline=True)
+		embed.add_field(name="Bots", value=f"There are **{bots}** messages from bots in **{channel}**.", inline=True)
+		await ctx.edit(embed=embed)
 
 @bot.slash_command(name="countall", description="Count messages in all channels")
 async def countall(ctx):
 	await ctx.respond("Counting messages...")
-	dates = []
 	bots = 0
 	users = 0
+	messages_per_date = {}
 	for channel in ctx.guild.channels:
 		if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel== True:
 			async for message in channel.history(limit=None):
+				message_date = message.created_at.date()
+				if message_date not in messages_per_date: # Add the date to the dictionary if necessary
+					messages_per_date[message_date] = 0
+				messages_per_date[message_date] += 1 # Increment the number of messages on that date
 				if message.author.bot == True:
 					bots += 1
-					dates.append(message.created_at)
 				else:
 					users += 1
-					dates.append(message.created_at)
 				print(bots+users)
+	print(messages_per_date)
 	await ctx.respond(f"There are **{users+bots}** messages in this guild. **{users}** of them are from users and **{bots}** of them are from bots.")
 
 # Run the bot with the token
