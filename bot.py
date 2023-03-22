@@ -1,6 +1,7 @@
 # Import pycord to acces the discord api
 import discord
 from discord import option
+from discord.ext import tasks
 
 # Import the os module to access the environment variables
 import os
@@ -26,6 +27,7 @@ async def on_ready():
 		print(f"- {guild.id} (name: {guild.name})")
 		guild_count = guild_count + 1
 	print("Trackbot is in " + str(guild_count) + " guilds.")
+	count_messages.start()
 
 # When the bot receives the command "/hello", it will respond with "Hello {name}!"
 @bot.slash_command()
@@ -105,6 +107,32 @@ async def countall(ctx, user: discord.User=None):
 					print(bots+users)
 		print(messages_per_date)
 		await ctx.respond(f"There are **{users+bots}** messages in this guild. **{users}** of them are from users and **{bots}** of them are from bots.")
+
+
+@tasks.loop(minutes=5)
+async def count_messages():
+	await bot.wait_until_ready()
+	print("Counting messages...")
+	bots = 0
+	users = 0
+	messages_per_date = {}
+	guild = bot.get_guild(1021691188287373322)
+	for channel in guild.channels:
+		if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel== True:
+			async for message in channel.history(limit=None):
+				message_date = message.created_at.date()
+				if message_date not in messages_per_date:
+					messages_per_date[message_date] = 0
+				messages_per_date[message_date] += 1
+				if message.author.bot == True:
+					bots += 1
+				else:
+					users += 1
+	print(bots+users)
+	# print(messages_per_date)
+	channel = bot.get_channel(1081203360956420207)
+	await channel.send(f"There are **{users+bots}** messages in this guild. **{users}** of them are from users and **{bots}** of them are from bots.")
+	await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"{users+bots} messages in this guild"))
 
 # Run the bot with the token
 bot.run(TOKEN)
