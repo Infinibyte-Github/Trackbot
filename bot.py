@@ -42,7 +42,7 @@ async def on_ready():
 		guild_count = guild_count + 1
 	print("Trackbot is in " + str(guild_count) + " guilds.")
 	count_messages.start()
-	# count_channel_distribution.start()
+	count_channel_distribution.start()
 
 # When the bot receives the command "/hello", it will respond with "Hello {name}!"
 
@@ -141,10 +141,10 @@ async def count_messages():
 	print("Counting messages...")
 	bots = 0
 	users = 0
-	messages_per_date = {}
 	guild = bot.get_guild(1021691188287373322)
 	for channel in guild.channels:
 		if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel == True:
+			messages_per_date = {}
 			async for message in channel.history(limit=None):
 				message_date = message.created_at.date()
 				if message_date not in messages_per_date:
@@ -164,10 +164,10 @@ async def count_messages():
 			for date in messages_per_date:
 				cursor.execute(f'INSERT INTO "{channel.name}" (DATE, COUNT) VALUES (?, ?)', (date, messages_per_date[date]))
 				# print(f"Added {messages_per_date[date]} messages from {date} to {channel.name}")
-			print(f"Added {channel.name} to database")
-			
+			# print(f"Added {channel.name} to database")
+
 	conn.commit()
-	print(bots+users)
+	print("Updated messages in database")
 	channel = bot.get_channel(1081203360956420207)
 	await channel.send(f"There are **{users+bots}** messages in this guild. **{users}** of them are from users and **{bots}** of them are from bots.")
 	await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"{users+bots} messages in this guild"))
@@ -184,7 +184,20 @@ async def count_channel_distribution():
 			channels[channel.name] = 0
 			async for message in channel.history(limit=None):
 				channels[channel.name] += 1
-	print(channels)
+			
+	cursor.execute(f'DROP TABLE IF EXISTS ChannelDistribution')
+	sql = f'''CREATE TABLE ChannelDistribution(
+				Channel VARCHAR(255) NOT NULL,
+				Count INT
+				)'''
+	cursor.execute(sql)
+	for entry in channels:
+		cursor.execute(f'INSERT INTO ChannelDistribution (Channel, COUNT) VALUES (?, ?)', (entry, channels[entry]))
+		# print(f"Added {entry} to database")
+
+	conn.commit()
+
+	print("Updated channel distribution")
 	channel = bot.get_channel(1081203360956420207)
 	await channel.send(f"Channel distribution: {channels}")
 
