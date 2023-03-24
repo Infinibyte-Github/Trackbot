@@ -1,4 +1,6 @@
 # Import pycord to acces the discord api
+import sqlite3
+import datetime
 import discord
 from discord import option
 from discord.ext import tasks
@@ -10,6 +12,10 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+# Import the datetime module to access the date and time
+
+# Import the sqlite3 module to access the database
+
 # Get the token from the .env file
 TOKEN = os.getenv('DISCORD_TOKEN')
 DEBUG_GUILDS = os.getenv('DEBUG_GUILDS')
@@ -18,7 +24,15 @@ DEBUG_GUILDS = os.getenv('DEBUG_GUILDS')
 bot = discord.Bot(debug_guilds=[DEBUG_GUILDS])
 bot_version = "1.0"
 
+# Set the database connection
+conn = sqlite3.connect('database.db')
+
+# Creating a cursor object using the cursor() method
+cursor = conn.cursor()
+
 # When the bot is ready, print a message to the console, count the guilds and print the number of guilds
+
+
 @bot.event
 async def on_ready():
 	print(f"We have logged in as {bot.user} v{bot_version}")
@@ -28,8 +42,11 @@ async def on_ready():
 		guild_count = guild_count + 1
 	print("Trackbot is in " + str(guild_count) + " guilds.")
 	count_messages.start()
+	# count_channel_distribution.start()
 
 # When the bot receives the command "/hello", it will respond with "Hello {name}!"
+
+
 @bot.slash_command()
 async def hello(ctx, name: str = None):
 	name = name or ctx.author.name
@@ -39,68 +56,76 @@ async def hello(ctx, name: str = None):
 @bot.slash_command(name="count", description="Count messages in a channel")
 @option(name="channel", description="Specify the channel", required=False)
 @option(name="user", description="Count only messages from specified user", required=False)
-async def count(ctx, channel: discord.TextChannel=None, user: discord.User=None):
+async def count(ctx, channel: discord.TextChannel = None, user: discord.User = None):
 	channel = channel or ctx.channel
-	embed=discord.Embed(title="", description="", color=0xff0000)
+	embed = discord.Embed(title="", description="", color=0xff0000)
 	embed.set_image(url="https://i.stack.imgur.com/hzk6C.gif")
 	await ctx.respond(embed=embed)
 	bots = 0
 	users = 0
 	usermessages = 0
 	messages_per_date = {}
-	
-	if(user):
+
+	if (user):
 		async for message in channel.history(limit=None):
 			if message.author.id == user.id:
-				usermessages+=1
-		embed=discord.Embed(title="Results", description="", color=0xff0000)
-		embed.add_field(name="Messages", value=f"In total, {user.name} has send **{usermessages}** messages in {channel}.", inline=True)
+				usermessages += 1
+		embed = discord.Embed(title="Results", description="", color=0xff0000)
+		embed.add_field(
+			name="Messages", value=f"In total, {user.name} has send **{usermessages}** messages in {channel}.", inline=True)
 		await ctx.edit(embed=embed)
-						
+
 	else:
 		async for message in channel.history(limit=None):
 			message_date = message.created_at.date()
-			if message_date not in messages_per_date: # Add the date to the dictionary if necessary
+			if message_date not in messages_per_date:  # Add the date to the dictionary if necessary
 				messages_per_date[message_date] = 0
-			messages_per_date[message_date] += 1 # Increment the number of messages on that date
+			# Increment the number of messages on that date
+			messages_per_date[message_date] += 1
 			if message.author.bot == True:
 				bots += 1
 			else:
 				users += 1
 		# print(messages_per_date)
-		embed=discord.Embed(title="Results", description="", color=0xff0000)
-		embed.add_field(name="Messages", value=f"In total, there are **{users+bots}** messages in **{channel}**.", inline=True)
-		embed.add_field(name="Users", value=f"There are **{users}** messages from users in **{channel}**.", inline=True)
-		embed.add_field(name="Bots", value=f"There are **{bots}** messages from bots in **{channel}**.", inline=True)
+		embed = discord.Embed(title="Results", description="", color=0xff0000)
+		embed.add_field(
+			name="Messages", value=f"In total, there are **{users+bots}** messages in **{channel}**.", inline=True)
+		embed.add_field(
+			name="Users", value=f"There are **{users}** messages from users in **{channel}**.", inline=True)
+		embed.add_field(
+			name="Bots", value=f"There are **{bots}** messages from bots in **{channel}**.", inline=True)
 		await ctx.edit(embed=embed)
+
 
 @bot.slash_command(name="countall", description="Count messages in all channels")
 @option(name="user", description="Count only messages from specified user", required=False)
-async def countall(ctx, user: discord.User=None):
+async def countall(ctx, user: discord.User = None):
 	await ctx.respond("Counting messages...")
 	bots = 0
 	users = 0
 	usermessages = 0
 	messages_per_date = {}
 
-	if(user):
+	if (user):
 		for channel in ctx.guild.channels:
-			if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel== True:
+			if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel == True:
 				async for message in channel.history(limit=None):
 					if message.author.id == user.id:
-						usermessages+=1
-		embed=discord.Embed(title="Results", description="", color=0xff0000)
-		embed.add_field(name="Messages", value=f"In total, {user.name} has send **{usermessages}** messages in this server.", inline=True)
+						usermessages += 1
+		embed = discord.Embed(title="Results", description="", color=0xff0000)
+		embed.add_field(
+			name="Messages", value=f"In total, {user.name} has send **{usermessages}** messages in this server.", inline=True)
 		await ctx.edit(embed=embed)
 
 	else:
 		for channel in ctx.guild.channels:
-			if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel== True:
+			if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel == True:
 				async for message in channel.history(limit=None):
 					message_date = message.created_at.date()
-					if message_date not in messages_per_date: # Add the date to the dictionary if necessary
+					if message_date not in messages_per_date:  # Add the date to the dictionary if necessary
 						messages_per_date[message_date] = 0
-					messages_per_date[message_date] += 1 # Increment the number of messages on that date
+					# Increment the number of messages on that date
+					messages_per_date[message_date] += 1
 					if message.author.bot == True:
 						bots += 1
 					else:
@@ -119,7 +144,7 @@ async def count_messages():
 	messages_per_date = {}
 	guild = bot.get_guild(1021691188287373322)
 	for channel in guild.channels:
-		if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel== True:
+		if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel == True:
 			async for message in channel.history(limit=None):
 				message_date = message.created_at.date()
 				if message_date not in messages_per_date:
@@ -129,11 +154,40 @@ async def count_messages():
 					bots += 1
 				else:
 					users += 1
+			
+			cursor.execute(f'DROP TABLE IF EXISTS "{channel.name}"')
+			sql = f'''CREATE TABLE "{channel.name}"(
+				Date DATETIME NOT NULL,
+				Count INT
+				)'''
+			cursor.execute(sql)
+			for date in messages_per_date:
+				cursor.execute(f'INSERT INTO "{channel.name}" (DATE, COUNT) VALUES (?, ?)', (date, messages_per_date[date]))
+				# print(f"Added {messages_per_date[date]} messages from {date} to {channel.name}")
+			print(f"Added {channel.name} to database")
+			
+	conn.commit()
 	print(bots+users)
-	# print(messages_per_date)
 	channel = bot.get_channel(1081203360956420207)
 	await channel.send(f"There are **{users+bots}** messages in this guild. **{users}** of them are from users and **{bots}** of them are from bots.")
 	await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"{users+bots} messages in this guild"))
+
+
+@tasks.loop(minutes=5)
+async def count_channel_distribution():
+	await bot.wait_until_ready()
+	print("Counting channel distribution...")
+	guild = bot.get_guild(1021691188287373322)
+	channels = {}
+	for channel in guild.channels:
+		if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel == True:
+			channels[channel.name] = 0
+			async for message in channel.history(limit=None):
+				channels[channel.name] += 1
+	print(channels)
+	channel = bot.get_channel(1081203360956420207)
+	await channel.send(f"Channel distribution: {channels}")
+
 
 # Run the bot with the token
 bot.run(TOKEN)
