@@ -48,6 +48,7 @@ async def count(ctx, channel: discord.TextChannel=None, user: discord.User=None)
 	users = 0
 	usermessages = 0
 	messages_per_date = {}
+	
 	if(user):
 		async for message in channel.history(limit=None):
 			if message.author.id == user.id:
@@ -81,7 +82,7 @@ async def countall(ctx, user: discord.User=None):
 	users = 0
 	usermessages = 0
 	messages_per_date = {}
-	
+
 	if(user):
 		for channel in ctx.guild.channels:
 			if isinstance(channel, discord.TextChannel) and channel.guild.me.guild_permissions.view_channel== True:
