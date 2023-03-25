@@ -45,12 +45,20 @@ async def on_ready():
 	count_channel_distribution.start()
 
 # When the bot receives the command "/hello", it will respond with "Hello {name}!"
-
-
 @bot.slash_command()
 async def hello(ctx, name: str = None):
 	name = name or ctx.author.name
 	await ctx.respond(f"Hello {name}!")
+
+
+# When the bot recieves the command "/ban", it will ban the user and send a message to the user
+@bot.slash_command(Name="ban", description="Ban a user")
+@discord.ext.commands.has_permissions(administrator=True)
+async def ban(ctx, user: discord.User, reason: str = None):
+	reason = reason or "No reason provided"
+	await ctx.guild.ban(user, reason=reason)
+	await ctx.respond(f"{user} has been banned for ***{reason}***.")
+	await user.send(f"You have been banned from {ctx.guild.name} for ***{reason}***.")
 
 
 @bot.slash_command(name="count", description="Count messages in a channel")
